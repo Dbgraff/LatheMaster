@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Устройство токарного станка | Интерактивный учебник</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Боковая панель -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">⚙️</span>
+                    <span class="logo-text">Lathe<span class="logo-accent">Master</span></span>
+                </div>
+                <p class="logo-subtitle">Устройство токарного станка</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Содержание</h3>
+                    <ul class="nav-menu">
+                        <li class="nav-item active" data-chapter="1">
+                            <span class="nav-number">01</span>
+                            <span class="nav-title">Введение</span>
+                        </li>
+                        <li class="nav-item" data-chapter="2">
+                            <span class="nav-number">02</span>
+                            <span class="nav-title">Работа станка</span>
+                        </li>
+                        <li class="nav-item" data-chapter="3">
+                            <span class="nav-number">03</span>
+                            <span class="nav-title">Передняя бабка</span>
+                        </li>
+                        <li class="nav-item" data-chapter="4">
+                            <span class="nav-number">04</span>
+                            <span class="nav-title">Задняя бабка</span>
+                        </li>
+                        <li class="nav-item" data-chapter="5">
+                            <span class="nav-number">05</span>
+                            <span class="nav-title">Суппорт</span>
+                        </li>
+                        <li class="nav-item" data-chapter="6">
+                            <span class="nav-number">06</span>
+                            <span class="nav-title">Станина</span>
+                        </li>
+                        <li class="nav-item" data-chapter="7">
+                            <span class="nav-number">07</span>
+                            <span class="nav-title">Кинематика</span>
+                        </li>
+                        <li class="nav-item" data-chapter="8">
+                            <span class="nav-number">08</span>
+                            <span class="nav-title">Виды работ</span>
+                        </li>
+                        <li class="nav-item" data-chapter="9">
+                            <span class="nav-number">09</span>
+                            <span class="nav-title">Режущий инструмент</span>
+                        </li>
+                        <li class="nav-item" data-chapter="10">
+                            <span class="nav-number">10</span>
+                            <span class="nav-title">Проверка знаний</span>
+                        </li>
+                        <li class="nav-item" data-chapter="11">
+                            <span class="nav-number">11</span>
+                            <span class="nav-title">Симулятор работы станка</span>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <span>Прогресс</span>
+                        <span class="progress-percent" id="progressPercent">10%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill" style="width: 10%"></div>
+                    </div>
+                    <span class="progress-text" id="progressText">1 из 11 глав</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            <!-- Глава 1: Введение -->
+            <section class="chapter active" id="chapter1">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Введение в токарное дело</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 1</span>
+                        <span class="chapter-tag light">Основы</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🔧 Что такое токарный станок?</h3>
+                            <p>Токарный станок — технологическая машина для обработки тел вращения (валов, втулок,
+                                дисков) путем снятия стружки. Заготовка вращается, а резец перемещается, придавая детали
+                                нужную форму.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>📜 История</h3>
+                            <p>Первый токарный станок с лучковым приводом появился в Древнем Египте. Современный
+                                универсальный станок создан Генри Модсли в 1800 году, который изобрел суппорт.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚙️ Основные движения</h3>
+                            <p><strong>Главное движение</strong> — вращение заготовки<br><strong>Движение
+                                    подачи</strong> — перемещение резца</p>
+                        </div>
+                    </div>
+
+                    <!-- Упрощенная схема (оставлена) -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">Упрощенная схема токарного станка</h3>
+                        <div class="schema-container light">
+                            <svg width="100%" height="240" viewBox="0 0 900 240" preserveAspectRatio="xMidYMid meet">
+                                <!-- Станина -->
+                                <rect x="50" y="170" width="800" height="25" fill="#95A5A6" rx="3" />
+
+                                <!-- Передняя бабка -->
+                                <rect x="80" y="60" width="130" height="110" fill="#E67E22" rx="5" />
+                                <circle cx="140" cy="125" r="25" fill="#BDC3C7" stroke="#2C3E50" stroke-width="2" />
+
+                                <!-- Шпиндель (короткий) -->
+                                <rect x="210" y="115" width="30" height="20" fill="#BDC3C7" rx="3" />
+
+                                <!-- Патрон - вплотную к передней бабке -->
+                                <circle cx="250" cy="125" r="30" fill="#7F8C8D" stroke="#2C3E50" stroke-width="2" />
+                                <circle cx="250" cy="125" r="8" fill="#2C3E50" />
+
+                                <!-- Заготовка -->
+                                <rect x="280" y="115" width="350" height="20" fill="#3498DB" rx="3" />
+
+                                <!-- Задняя бабка -->
+                                <rect x="640" y="70" width="110" height="100" fill="#E67E22" rx="5" />
+                                <rect x="620" y="110" width="30" height="30" fill="#F39C12" rx="3" />
+
+                                <!-- Суппорт с резцом -->
+                                <rect x="400" y="140" width="80" height="30" fill="#27AE60" rx="4" />
+                                <rect x="430" y="110" width="40" height="30" fill="#F1C40F" rx="3" />
+                                <polygon points="470,125 490,120 490,130 470,125" fill="#E74C3C" />
+
+                                <!-- Подписи -->
+                                <text x="100" y="40" fill="#2C3E50" font-weight="600">Передняя бабка</text>
+                                <text x="240" y="80" fill="#2C3E50" font-weight="600">Патрон</text>
+                                <text x="620" y="50" fill="#2C3E50" font-weight="600">Задняя бабка</text>
+                                <text x="410" y="190" fill="#2C3E50" font-weight="600">Суппорт</text>
+                                <text x="450" y="90" fill="#2C3E50" font-weight="600">Резец</text>
+                                <text x="550" y="220" fill="#2C3E50" font-weight="600">Станина</text>
+                            </svg>
+                        </div>
+                        <p class="schema-caption">Основные узлы токарного станка: передняя бабка, патрон, задняя бабка,
+                            суппорт, станина</p>
+                    </div>
+
+                    <!-- 3D модель станка (замена интерактивной схемы) -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">3D модель токарного станка</h3>
+                        <div class="schema-container light">
+                            <iframe title="3D модель токарного станка" frameborder="0" allowfullscreen
+                                mozallowfullscreen="true" webkitallowfullscreen="true"
+                                allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking
+                                execution-while-out-of-viewport execution-while-not-rendered web-share
+                                src="https://sketchfab.com/models/ff59679ac00248868e8236f39848eb55/embed" width="100%"
+                                height="480"></iframe>
+                        </div>
+                        <p class="schema-caption">Интерактивная 3D модель токарного станка. Вы можете вращать,
+                            приближать и исследовать модель.</p>
+                    </div>
+
+                    <!-- Таблица основных узлов -->
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>№</th>
+                                    <th>Узел</th>
+                                    <th>Назначение</th>
+                                    <th>Основные элементы</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr data-part="headstock">
+                                    <td>1</td>
+                                    <td><strong>Передняя бабка</strong></td>
+                                    <td>Передача вращения заготовке</td>
+                                    <td>Шпиндель, коробка скоростей, подшипники</td>
+                                </tr>
+                                <tr data-part="chuck">
+                                    <td>2</td>
+                                    <td><strong>Патрон</strong></td>
+                                    <td>Зажим и центрирование заготовки</td>
+                                    <td>Кулачки, корпус, спиральный механизм</td>
+                                </tr>
+                                <tr data-part="tailstock">
+                                    <td>3</td>
+                                    <td><strong>Задняя бабка</strong></td>
+                                    <td>Поддержка длинных заготовок</td>
+                                    <td>Пиноль, центр, основание</td>
+                                </tr>
+                                <tr data-part="carriage">
+                                    <td>4</td>
+                                    <td><strong>Суппорт</strong></td>
+                                    <td>Перемещение резца</td>
+                                    <td>Каретка, салазки, фартук</td>
+                                </tr>
+                                <tr data-part="toolpost">
+                                    <td>5</td>
+                                    <td><strong>Резцедержатель</strong></td>
+                                    <td>Крепление резца</td>
+                                    <td>Поворотный механизм, прихваты</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 2: Работа станка -->
+            <section class="chapter" id="chapter2">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Работа токарного станка</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 2</span>
+                        <span class="chapter-tag light">Анимация</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <p>В этой главе мы рассмотрим, как работает токарный станок в действии. Ниже приведена анимация
+                        процесса токарной обработки.</p>
+
+                    <!-- Анимация работы станка -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">Анимация работы токарного станка</h3>
+                        <div class="schema-container light">
+                            <img src="https://i.pinimg.com/originals/50/0a/83/500a8303867d20f09aaf5fd2630f5a34.gif"
+                                alt="Анимация токарного станка" style="width:100%; height:auto;">
+                        </div>
+                        <p class="schema-caption">Анимация демонстрирует процесс обработки заготовки на токарном станке:
+                            вращение шпинделя, перемещение резца и снятие стружки.</p>
+                    </div>
+
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🔄 Процесс работы</h3>
+                            <p>Заготовка фиксируется в патроне, станок включается, шпиндель вращается, суппорт
+                                перемещает резец для снятия материала.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>🛡️ Безопасность</h3>
+                            <p>Всегда используйте защитные очки, не касайтесь вращающихся частей, проверяйте фиксацию
+                                заготовки.</p>
+                        </div>
+                    </div>
+
+                    <!-- Вторая анимация для разнообразия -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">Другая анимация мини-станка</h3>
+                        <div class="schema-container light">
+                            <img src="https://b2b.partcommunity.com/community/partcloud/uploaded_models/partcloud/usercontent/d3e/562/612771/53025/images/70373.800x450.gif"
+                                alt="Анимация мини-токарного станка" style="width:100%; height:auto;">
+                        </div>
+                        <p class="schema-caption">Анимация мини-токарного станка для деревообработки.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 3: Передняя бабка -->
+            <section class="chapter" id="chapter3">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Передняя бабка</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 3</span>
+                        <span class="chapter-tag light">Коробка скоростей</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🏭 Назначение</h3>
+                            <p>Передняя бабка обеспечивает вращение заготовки с регулируемой частотой. В ней расположен
+                                шпиндель и механизм изменения скоростей.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚙️ Основные элементы</h3>
+                            <p>Шпиндель, коробка скоростей, подшипники, электродвигатель (иногда), рычаги переключения.
+                            </p>
+                        </div>
+                        <div class="info-card">
+                            <h3>📊 Характеристики</h3>
+                            <p>Диапазон оборотов: 12.5-2000 об/мин, 22 ступени, отверстие шпинделя 52 мм, конус Морзе
+                                №6.</p>
+                        </div>
+                    </div>
+
+                    <!-- 3D модель передней бабки (замена схемы) -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">3D модель передней бабки</h3>
+                        <div class="schema-container light">
+                            <iframe title="3D модель передней бабки" frameborder="0" allowfullscreen
+                                mozallowfullscreen="true" webkitallowfullscreen="true"
+                                allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking
+                                execution-while-out-of-viewport execution-while-not-rendered web-share
+                                src="https://sketchfab.com/models/8878352f45a84e3bac60b1a018923a41/embed" width="100%"
+                                height="480"></iframe>
+                        </div>
+                        <p class="schema-caption">Интерактивная 3D модель передней бабки токарного станка.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 4: Задняя бабка -->
+            <section class="chapter" id="chapter4">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Задняя бабка</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 4</span>
+                        <span class="chapter-tag light">Поддержка заготовки</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🏗️ Назначение</h3>
+                            <p>Задняя бабка поддерживает длинные заготовки, предотвращая прогиб. Используется для
+                                сверления, зенкерования.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>🔩 Основные элементы</h3>
+                            <p>Основание, корпус, пиноль, маховик, фиксатор, центр (вращающийся или неподвижный).</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>📐 Характеристики</h3>
+                            <p>Ход пиноли 120 мм, конус Морзе №4, поперечное смещение ±15 мм, усилие зажима до 300 кгс.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 3D модель задней бабки -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">3D модель задней бабки</h3>
+                        <div class="schema-container light">
+                            <iframe title="3D модель задней бабки" frameborder="0" allowfullscreen
+                                mozallowfullscreen="true" webkitallowfullscreen="true"
+                                allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking
+                                execution-while-out-of-viewport execution-while-not-rendered web-share
+                                src="https://sketchfab.com/models/8878352f45a84e3bac60b1a018923a41/embed" width="100%"
+                                height="480"></iframe>
+                        </div>
+                        <p class="schema-caption">Интерактивная 3D модель задней бабки токарного станка.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 5: Суппорт -->
+            <section class="chapter" id="chapter5">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Суппорт</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 5</span>
+                        <span class="chapter-tag light">Перемещение инструмента</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🚀 Назначение</h3>
+                            <p>Суппорт обеспечивает точное перемещение резца в продольном, поперечном и наклонном
+                                направлениях.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>🛠️ Основные элементы</h3>
+                            <p>Каретка, поперечные салазки, поворотные салазки, резцедержатель, фартук с механизмами
+                                подачи.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>📏 Характеристики</h3>
+                            <p>Продольное перемещение 900 мм, поперечное 250 мм, ход верхних салазок 140 мм, цена
+                                деления лимбов 0.05 мм.</p>
+                        </div>
+                    </div>
+
+                    <!-- 3D модель суппорта -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">3D модель суппорта</h3>
+                        <div class="schema-container light">
+                            <iframe title="3D модель суппорта" frameborder="0" allowfullscreen mozallowfullscreen="true"
+                                webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking"
+                                xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered
+                                web-share src="https://sketchfab.com/models/8878352f45a84e3bac60b1a018923a41/embed"
+                                width="100%" height="480"></iframe>
+                        </div>
+                        <p class="schema-caption">Интерактивная 3D модель суппорта токарного станка.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 6: Станина -->
+            <section class="chapter" id="chapter6">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Станина</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 6</span>
+                        <span class="chapter-tag light">Основание станка</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🛡️ Назначение</h3>
+                            <p>Станина - основа станка, обеспечивает точность и жесткость. На ней монтируются все узлы.
+                            </p>
+                        </div>
+                        <div class="info-card">
+                            <h3>🏗️ Материал</h3>
+                            <p>Чугун с высокой жесткостью, направляющие закалены и шлифованы для точного перемещения.
+                            </p>
+                        </div>
+                        <div class="info-card">
+                            <h3>📐 Характеристики</h3>
+                            <p>Длина 2000 мм, ширина 400 мм, высота 300 мм, направляющие типа "ласточкин хвост".</p>
+                        </div>
+                    </div>
+
+                    <!-- 3D модель станины -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">3D модель станины</h3>
+                        <div class="schema-container light">
+                            <iframe title="3D модель станины" frameborder="0" allowfullscreen mozallowfullscreen="true"
+                                webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking"
+                                xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered
+                                web-share src="https://sketchfab.com/models/8878352f45a84e3bac60b1a018923a41/embed"
+                                width="100%" height="480"></iframe>
+                        </div>
+                        <p class="schema-caption">Интерактивная 3D модель станины токарного станка.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 7: Кинематика -->
+            <section class="chapter" id="chapter7">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Кинематика станка</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 7</span>
+                        <span class="chapter-tag light">Цепи движений</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🔄 Главное движение</h3>
+                            <p>Вращение шпинделя от электродвигателя через ремень и коробку скоростей.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>📏 Движение подачи</h3>
+                            <p>Перемещение суппорта от шпинделя через гитару, коробку подач и ходовой винт/вал.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>🔗 Передаточные отношения</h3>
+                            <p>i = n_вход / n_выход, диапазон подач 0.05-2.8 мм/об.</p>
+                        </div>
+                    </div>
+
+                    <!-- 3D модель кинематики (использована модель станка как приближение) -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">3D модель кинематики</h3>
+                        <div class="schema-container light">
+                            <iframe title="3D модель кинематики" frameborder="0" allowfullscreen
+                                mozallowfullscreen="true" webkitallowfullscreen="true"
+                                allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking
+                                execution-while-out-of-viewport execution-while-not-rendered web-share
+                                src="https://sketchfab.com/models/ff59679ac00248868e8236f39848eb55/embed" width="100%"
+                                height="480"></iframe>
+                        </div>
+                        <p class="schema-caption">Интерактивная 3D модель демонстрирует кинематику токарного станка.</p>
+                    </div>
+
+                    <!-- Уравнения -->
+                    <div class="cards-grid two">
+                        <div class="info-card">
+                            <h4>Уравнение для цепи главного движения</h4>
+                            <div class="formula">n<sub>шп</sub> = n<sub>дв</sub> × i<sub>рем</sub> × i<sub>кс</sub>
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <h4>Уравнение для цепи подачи</h4>
+                            <div class="formula">S = 1 × i<sub>кп</sub> × i<sub>г</sub> × t<sub>хв</sub></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 8: Виды работ (оставлены схемы) -->
+            <section class="chapter" id="chapter8">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Виды токарных работ</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 8</span>
+                        <span class="chapter-tag light">Технология</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="works-grid">
+                        <!-- Наружное точение -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <rect x="30" y="35" width="120" height="25" fill="#3498DB" rx="2" />
+                                    <polygon points="150,45 175,40 175,50 150,45" fill="#E74C3C" />
+                                    <line x1="30" y1="25" x2="30" y2="70" stroke="#2C3E50" stroke-width="1"
+                                        stroke-dasharray="3 2" />
+                                    <line x1="150" y1="25" x2="150" y2="70" stroke="#2C3E50" stroke-width="1"
+                                        stroke-dasharray="3 2" />
+                                </svg>
+                            </div>
+                            <h4>Наружное точение</h4>
+                            <p>Обработка цилиндрических поверхностей</p>
+                            <div class="work-params">t = 1-6 мм, S = 0.1-0.5 мм/об</div>
+                        </div>
+
+                        <!-- Подрезка торца -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <rect x="30" y="20" width="100" height="55" fill="#3498DB" />
+                                    <polygon points="130,45 155,35 155,55 130,45" fill="#E74C3C" />
+                                    <line x1="130" y1="45" x2="155" y2="45" stroke="#2C3E50" stroke-width="2" />
+                                </svg>
+                            </div>
+                            <h4>Подрезка торца</h4>
+                            <p>Обработка перпендикулярных оси поверхностей</p>
+                            <div class="work-params">t = до 2 мм, S = 0.1-0.3 мм/об</div>
+                        </div>
+
+                        <!-- Точение канавки -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <rect x="30" y="35" width="120" height="25" fill="#3498DB" />
+                                    <rect x="70" y="35" width="20" height="25" fill="none" stroke="#E74C3C"
+                                        stroke-width="3" />
+                                    <polygon points="90,20 110,25 90,30" fill="#E74C3C" />
+                                </svg>
+                            </div>
+                            <h4>Точение канавок</h4>
+                            <p>Прорезка прямоугольных канавок</p>
+                            <div class="work-params">Ширина 2-12 мм, глубина до 10 мм</div>
+                        </div>
+
+                        <!-- Отрезка -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <rect x="30" y="30" width="120" height="30" fill="#3498DB" />
+                                    <line x1="90" y1="25" x2="90" y2="65" stroke="#E74C3C" stroke-width="4" />
+                                </svg>
+                            </div>
+                            <h4>Отрезка</h4>
+                            <p>Отделение готовой детали</p>
+                            <div class="work-params">Ширина резца 3-6 мм</div>
+                        </div>
+
+                        <!-- Нарезание резьбы -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <line x1="30" y1="45" x2="150" y2="45" stroke="#2C3E50" stroke-width="4" />
+                                    <line x1="40" y1="35" x2="40" y2="55" stroke="#2C3E50" stroke-width="1.5" />
+                                    <line x1="70" y1="35" x2="70" y2="55" stroke="#2C3E50" stroke-width="1.5" />
+                                    <line x1="100" y1="35" x2="100" y2="55" stroke="#2C3E50" stroke-width="1.5" />
+                                    <line x1="130" y1="35" x2="130" y2="55" stroke="#2C3E50" stroke-width="1.5" />
+                                    <polygon points="150,40 170,35 170,55 150,40" fill="#E74C3C" />
+                                </svg>
+                            </div>
+                            <h4>Нарезание резьбы</h4>
+                            <p>Метрическая, дюймовая резьба</p>
+                            <div class="work-params">Шаг 0.5-6 мм, 4-8 проходов</div>
+                        </div>
+
+                        <!-- Сверление -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <rect x="30" y="30" width="80" height="30" fill="#3498DB" />
+                                    <path d="M110 45 L140 25 L140 65 Z" fill="#7F8C8D" />
+                                </svg>
+                            </div>
+                            <h4>Сверление</h4>
+                            <p>Сверление отверстий</p>
+                            <div class="work-params">Диаметр до 50 мм</div>
+                        </div>
+
+                        <!-- Растачивание -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <circle cx="80" cy="45" r="25" fill="none" stroke="#3498DB" stroke-width="4" />
+                                    <polygon points="105,45 130,35 130,55 105,45" fill="#E74C3C" />
+                                </svg>
+                            </div>
+                            <h4>Растачивание</h4>
+                            <p>Обработка внутренних поверхностей</p>
+                            <div class="work-params">t = 1-3 мм, точность IT7-IT9</div>
+                        </div>
+
+                        <!-- Обработка конуса -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <polygon points="30,30 30,60 140,45 140,45" fill="#3498DB" />
+                                    <polygon points="140,40 160,35 160,55 140,40" fill="#E74C3C" />
+                                </svg>
+                            </div>
+                            <h4>Обработка конуса</h4>
+                            <p>Поворотом верхних салазок</p>
+                            <div class="work-params">Угол до 8°</div>
+                        </div>
+
+                        <!-- Фасонное точение -->
+                        <div class="work-card">
+                            <div class="work-schema">
+                                <svg width="100%" height="100" viewBox="0 0 200 100">
+                                    <path d="M30 45 Q60 25, 90 45 T150 45" fill="none" stroke="#3498DB"
+                                        stroke-width="4" />
+                                    <polygon points="150,40 170,35 170,55 150,40" fill="#E74C3C" />
+                                </svg>
+                            </div>
+                            <h4>Фасонное точение</h4>
+                            <p>Сложные профили</p>
+                            <div class="work-params">Фасонным резцом</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 9: Режущий инструмент (оставлена схема) -->
+            <section class="chapter" id="chapter9">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Режущий инструмент</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 9</span>
+                        <span class="chapter-tag light">Токарные резцы</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <!-- Геометрия резца -->
+                    <div class="schema-card">
+                        <h3 class="schema-title">Геометрия токарного резца</h3>
+                        <div class="schema-container">
+                            <svg width="100%" height="180" viewBox="0 0 600 180">
+                                <!-- Державка -->
+                                <rect x="100" y="70" width="300" height="50" fill="#7F8C8D" rx="6" />
+
+                                <!-- Головка резца -->
+                                <polygon points="400,70 440,40 440,100 400,70" fill="#E67E22" />
+
+                                <!-- Режущая пластина -->
+                                <polygon points="430,40 455,30 455,50 430,40" fill="#E74C3C" />
+
+                                <!-- Углы -->
+                                <circle cx="440" cy="40" r="15" fill="none" stroke="#2C3E50" stroke-width="2" />
+                                <line x1="440" y1="40" x2="455" y2="30" stroke="#2C3E50" stroke-width="2" />
+                                <line x1="440" y1="40" x2="455" y2="50" stroke="#2C3E50" stroke-width="2" />
+
+                                <!-- Подписи -->
+                                <text x="460" y="25" fill="#2C3E50">α (задний угол)</text>
+                                <text x="460" y="65" fill="#2C3E50">γ (передний угол)</text>
+                                <text x="200" y="130" fill="#2C3E50">Державка</text>
+                                <text x="410" y="110" fill="#2C3E50">Головка</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Типы резцов -->
+                    <h3 class="section-subtitle">Типы резцов по назначению</h3>
+                    <div class="cutters-list">
+                        <div class="cutter-row">
+                            <span class="cutter-icon">➡️</span>
+                            <div>
+                                <strong>Проходной прямой</strong> — для наружного точения
+                            </div>
+                        </div>
+                        <div class="cutter-row">
+                            <span class="cutter-icon">⬅️</span>
+                            <div>
+                                <strong>Проходной упорный</strong> — для точения уступов
+                            </div>
+                        </div>
+                        <div class="cutter-row">
+                            <span class="cutter-icon">🔲</span>
+                            <div>
+                                <strong>Подрезной</strong> — для обработки торцов
+                            </div>
+                        </div>
+                        <div class="cutter-row">
+                            <span class="cutter-icon">🔪</span>
+                            <div>
+                                <strong>Отрезной</strong> — для отрезания детали
+                            </div>
+                        </div>
+                        <div class="cutter-row">
+                            <span class="cutter-icon">🥨</span>
+                            <div>
+                                <strong>Резьбовой</strong> — для нарезания резьбы
+                            </div>
+                        </div>
+                        <div class="cutter-row">
+                            <span class="cutter-icon">🌀</span>
+                            <div>
+                                <strong>Расточной</strong> — для внутренних работ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 10: Проверка знаний -->
+            <section class="chapter" id="chapter10">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Проверка знаний</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 10</span>
+                        <span class="chapter-tag light">Тест</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <div class="test-card">
+                        <div class="test-header">
+                            <div class="test-progress">
+                                <div class="test-progress-bar" id="testProgress" style="width: 20%"></div>
+                            </div>
+                            <div class="test-counter" id="testCounter">1/5</div>
+                        </div>
+
+                        <div class="test-question" id="testQuestion">
+                            <p class="question-text">1. Какой узел токарного станка служит для закрепления и вращения
+                                заготовки?</p>
+                            <div class="test-options">
+                                <label class="test-option">
+                                    <input type="radio" name="q1" value="1">
+                                    <span>Задняя бабка</span>
+                                </label>
+                                <label class="test-option">
+                                    <input type="radio" name="q1" value="2">
+                                    <span>Передняя бабка со шпинделем</span>
+                                </label>
+                                <label class="test-option">
+                                    <input type="radio" name="q1" value="3">
+                                    <span>Суппорт</span>
+                                </label>
+                                <label class="test-option">
+                                    <input type="radio" name="q1" value="4">
+                                    <span>Станина</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="test-footer">
+                            <button class="test-btn" id="testPrev" disabled>← Назад</button>
+                            <button class="test-btn" id="testNext">Далее →</button>
+                            <button class="test-btn primary" id="testSubmit" style="display: none;">Проверить</button>
+                        </div>
+
+                        <div class="test-result" id="testResult" style="display: none;">
+                            <h3>Результат</h3>
+                            <div class="result-score" id="resultScore">0/5</div>
+                            <button class="test-btn" id="testRestart">Пройти заново</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Глава 11: Симулятор работы станка (замените существующий раздел) -->
+            <section class="chapter" id="chapter11">
+                <div class="chapter-header">
+                    <h1 class="chapter-title">Симулятор работы токарного станка</h1>
+                    <div class="chapter-tags">
+                        <span class="chapter-tag">Глава 11</span>
+                        <span class="chapter-tag light">2.5D Симуляция</span>
+                    </div>
+                </div>
+
+                <div class="chapter-body">
+                    <p>В этой главе представлен 2.5D симулятор токарного станка с использованием Three.js. Вы можете
+                        наблюдать процесс обработки заготовки в реальном времени.</p>
+
+                    <div class="simulator-container">
+                        <div id="threejs-container"></div>
+                        <div class="sim-controls">
+                            <button id="startSimulation3d">▶ Запустить</button>
+                            <button id="stopSimulation3d">⏸ Пауза</button>
+                            <button id="resetSimulation3d">↺ Сброс</button>
+                            <label>
+                                Скорость вращения:
+                                <input type="range" id="speedControl" min="0" max="2" step="0.1" value="1">
+                            </label>
+                            <label>
+                                Подача резца:
+                                <input type="range" id="feedControl" min="0" max="2" step="0.1" value="1">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h3>🎮 Управление</h3>
+                            <p>• Кнопки для управления анимацией<br>• Слайдеры регулируют скорость вращения и
+                                подачу<br>• Можно вращать камеру мышью</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>⚙️ Процесс</h3>
+                            <p>Заготовка вращается, а резец движется вдоль оси, снимая материал. Цвет заготовки меняется
+                                по мере обработки.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>🔄 Взаимодействие</h3>
+                            <p>Используйте мышь для вращения камеры и колесико для приближения/отдаления.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Навигация -->
+            <div class="chapter-navigation">
+                <button class="nav-arrow-btn" id="prevChapterBtn" disabled>
+                    <span>←</span> Предыдущая
+                </button>
+                <div class="nav-pages">
+                    <span id="currentChapterDisplay">1</span> / <span>11</span>
+                </div>
+                <button class="nav-arrow-btn" id="nextChapterBtn">
+                    Следующая <span>→</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно для информации об узлах -->
+    <div class="modal" id="partModal">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <p class="modal-description" id="modalDescription"></p>
+            <h4>Основные элементы:</h4>
+            <ul class="modal-list" id="modalList"></ul>
+            <div class="modal-specs" id="modalSpecs"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
