@@ -3,7 +3,7 @@ if (typeof THREE === 'undefined') {
     console.log('Three.js will be loaded dynamically');
 }
 
-// 2.5D симулятор с Three.js
+// 2.5D симулятор с Three.js (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 class LatheSimulator3D {
     constructor() {
         this.scene = null;
@@ -14,19 +14,17 @@ class LatheSimulator3D {
         
         this.workpiece = null;
         this.tool = null;
-        this.headstock = null;
-        this.tailstock = null;
-        this.bed = null;
+        this.toolGroup = null;
+        this.chips = [];
         
+        // Исправленные параметры
         this.rotationSpeed = 0.02;
-        this.feedRate = 0.008;
-        this.toolPosition = 0.4; // Начинаем от задней бабки с отступом
-        this.maxToolTravel = 2.6; // Ограничиваем до передней бабки с отступом
-        this.minToolTravel = 0.4; // Отступ от задней бабки
+        this.feedRate = 0.002;
+        this.toolPosition = 0; // 0 = начальная позиция (справа)
+        this.maxToolTravel = 3.8;
         
         // Прогресс обработки
-        this.materialRemoved = new Array(20).fill(0);
-        this.currentSegment = 0;
+        this.materialRemoved = 0; 
         
         this.isRunning = false;
         
@@ -89,25 +87,27 @@ class LatheSimulator3D {
         const accentMaterial = new THREE.MeshStandardMaterial({ color: 0xe67e22, roughness: 0.3, metalness: 0.3 });
         const toolMaterial = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.2, metalness: 0.8 });
         
-        // Bed (Станина)
+        // ========== СТАНИНА ==========
         const bedGroup = new THREE.Group();
         
-        const bedBeam = new THREE.BoxGeometry(6, 0.3, 1.2);
+        // Основная балка станины
+        const bedBeam = new THREE.BoxGeometry(6.5, 0.3, 1.2);
         const bedMesh = new THREE.Mesh(bedBeam, metalMaterial);
-        bedMesh.position.set(-0.5, 0.15, 0);
+        bedMesh.position.set(-0.2, 0.15, 0);
         bedMesh.castShadow = true;
         bedMesh.receiveShadow = true;
         bedGroup.add(bedMesh);
         
-        const wayGeo = new THREE.BoxGeometry(6, 0.15, 0.25);
+        // Направляющие
+        const wayGeo = new THREE.BoxGeometry(6.5, 0.15, 0.25);
         const way1 = new THREE.Mesh(wayGeo, accentMaterial);
-        way1.position.set(-0.5, 0.4, -0.4);
+        way1.position.set(-0.2, 0.4, -0.4);
         way1.castShadow = true;
         way1.receiveShadow = true;
         bedGroup.add(way1);
         
         const way2 = new THREE.Mesh(wayGeo, accentMaterial);
-        way2.position.set(-0.5, 0.4, 0.4);
+        way2.position.set(-0.2, 0.4, 0.4);
         way2.castShadow = true;
         way2.receiveShadow = true;
         bedGroup.add(way2);
@@ -116,52 +116,54 @@ class LatheSimulator3D {
         this.scene.add(bedGroup);
         this.bed = bedGroup;
         
-        // Headstock (Передняя бабка) - слева
+        // ========== ПЕРЕДНЯЯ БАБКА (ИСПРАВЛЕНО) ==========
         const headstockGroup = new THREE.Group();
         
-        const headstockBase = new THREE.BoxGeometry(1.2, 1.0, 1.2);
+        // Основание передней бабки
+        const headstockBase = new THREE.BoxGeometry(1.4, 1.0, 1.2);
         const headstockMesh = new THREE.Mesh(headstockBase, accentMaterial);
-        headstockMesh.position.set(-2.2, 0.7, 0);
+        headstockMesh.position.set(-2.4, 0.7, 0);
         headstockMesh.castShadow = true;
         headstockMesh.receiveShadow = true;
         headstockGroup.add(headstockMesh);
         
+        // Шпиндельный узел
         const spindleHousing = new THREE.CylinderGeometry(0.6, 0.6, 0.7, 12);
         const spindleMesh = new THREE.Mesh(spindleHousing, metalMaterial);
-        spindleMesh.position.set(-1.5, 0.8, 0);
+        spindleMesh.position.set(-1.7, 0.8, 0);
         spindleMesh.rotation.z = Math.PI / 2;
         spindleMesh.castShadow = true;
         spindleMesh.receiveShadow = true;
         headstockGroup.add(spindleMesh);
         
-        // Chuck (Патрон)
+        // Патрон
         const chuckGroup = new THREE.Group();
-        
         const chuckBody = new THREE.CylinderGeometry(0.7, 0.7, 0.6, 8);
         const chuckMesh = new THREE.Mesh(chuckBody, new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.3, metalness: 0.7 }));
-        chuckMesh.position.set(-1.0, 0.8, 0);
+        chuckMesh.position.set(-1.2, 0.8, 0);
         chuckMesh.rotation.z = Math.PI / 2;
         chuckMesh.castShadow = true;
         chuckMesh.receiveShadow = true;
         chuckGroup.add(chuckMesh);
         
+        // Кулачки патрона
         for (let i = 0; i < 3; i++) {
             const jawGeo = new THREE.BoxGeometry(0.15, 0.25, 0.25);
             const jaw = new THREE.Mesh(jawGeo, new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.2, metalness: 0.8 }));
             const angle = (i / 3) * Math.PI * 2;
-            jaw.position.set(-1.0, 0.8 + Math.sin(angle) * 0.5, Math.cos(angle) * 0.5);
+            jaw.position.set(-1.2, 0.8 + Math.sin(angle) * 0.5, Math.cos(angle) * 0.5);
             jaw.castShadow = true;
             jaw.receiveShadow = true;
             chuckGroup.add(jaw);
         }
-        
         headstockGroup.add(chuckGroup);
         this.scene.add(headstockGroup);
         this.headstock = headstockGroup;
         
-        // Tailstock (Задняя бабка) - справа
+        // ========== ЗАДНЯЯ БАБКА (ИСПРАВЛЕНО) ==========
         const tailstockGroup = new THREE.Group();
         
+        // Основание задней бабки
         const tailstockBase = new THREE.BoxGeometry(1.0, 0.9, 1.2);
         const tailstockMesh = new THREE.Mesh(tailstockBase, accentMaterial);
         tailstockMesh.position.set(2.2, 0.65, 0);
@@ -169,35 +171,56 @@ class LatheSimulator3D {
         tailstockMesh.receiveShadow = true;
         tailstockGroup.add(tailstockMesh);
         
-        const quillGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.7, 8);
+        // Корпус
+        const tailstockBody = new THREE.BoxGeometry(0.6, 0.7, 1.0);
+        const bodyMesh = new THREE.Mesh(tailstockBody, metalMaterial);
+        bodyMesh.position.set(2.5, 0.9, 0);
+        bodyMesh.castShadow = true;
+        bodyMesh.receiveShadow = true;
+        tailstockGroup.add(bodyMesh);
+        
+        // Пиноль (выдвижная часть) - направлена ВЛЕВО
+        const quillGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 8);
         const quill = new THREE.Mesh(quillGeo, metalMaterial);
-        quill.position.set(2.8, 0.8, 0);
+        quill.position.set(2.0, 0.9, 0);
         quill.rotation.z = Math.PI / 2;
         quill.castShadow = true;
         quill.receiveShadow = true;
         tailstockGroup.add(quill);
         
+        // Центр (конус)
         const centerGeo = new THREE.ConeGeometry(0.2, 0.4, 8);
         const center = new THREE.Mesh(centerGeo, new THREE.MeshStandardMaterial({ color: 0xe67e22, roughness: 0.2, metalness: 0.9 }));
-        center.position.set(3.1, 0.8, 0);
-        center.rotation.z = -Math.PI / 2;
+        center.position.set(1.7, 0.9, 0);
+        center.rotation.z = Math.PI / 2;
         center.castShadow = true;
         center.receiveShadow = true;
         tailstockGroup.add(center);
         
+        // Маховик (сзади)
+        const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 8);
+        const wheel = new THREE.Mesh(wheelGeo, new THREE.MeshStandardMaterial({ color: 0x2c3e50 }));
+        wheel.position.set(2.8, 0.9, 0.5);
+        wheel.rotation.x = Math.PI / 2;
+        wheel.castShadow = true;
+        wheel.receiveShadow = true;
+        tailstockGroup.add(wheel);
+        
         this.scene.add(tailstockGroup);
         this.tailstock = tailstockGroup;
         
-        // Workpiece (Заготовка) - по центру, ось X
+        // ========== ЗАГОТОВКА (ИСПРАВЛЕНО МАСШТАБИРОВАНИЕ) ==========
         const workpieceMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x3498db, 
             roughness: 0.3, 
-            metalness: 0.2
+            metalness: 0.2,
+            emissive: 0x000000
         });
         
-        const workpieceGeo = new THREE.CylinderGeometry(0.25, 0.25, 3.0, 16);
+        // Заготовка - цилиндр вдоль оси X
+        const workpieceGeo = new THREE.CylinderGeometry(0.3, 0.3, 4.0, 24);
         this.workpiece = new THREE.Mesh(workpieceGeo, workpieceMaterial);
-        this.workpiece.position.set(-0.2, 0.8, 0); // Z = 0 (ось детали)
+        this.workpiece.position.set(0.3, 0.8, 0);
         this.workpiece.rotation.z = Math.PI / 2;
         this.workpiece.castShadow = true;
         this.workpiece.receiveShadow = true;
@@ -205,7 +228,7 @@ class LatheSimulator3D {
         
         // Торцевые заглушки
         const capMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.5 });
-        const capGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.15, 12);
+        const capGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.15, 12);
         
         const cap1 = new THREE.Mesh(capGeo, capMaterial);
         cap1.position.set(-1.7, 0.8, 0);
@@ -215,64 +238,62 @@ class LatheSimulator3D {
         this.scene.add(cap1);
         
         const cap2 = new THREE.Mesh(capGeo, capMaterial);
-        cap2.position.set(1.3, 0.8, 0);
+        cap2.position.set(2.3, 0.8, 0);
         cap2.rotation.z = Math.PI / 2;
         cap2.castShadow = true;
         cap2.receiveShadow = true;
         this.scene.add(cap2);
         
-        // Tool post and tool (Суппорт с резцом) - ПРАВИЛЬНОЕ ПОЛОЖЕНИЕ
-        const toolGroup = new THREE.Group();
+        // ========== СУППОРТ С РЕЗЦОМ ==========
+        this.toolGroup = new THREE.Group();
         
-        // Суппорт (зеленое основание) - СТОИТ ПЕРЕД ДЕТАЛЬЮ (Z > 0)
+        // Суппорт (зеленое основание)
         const toolPostBase = new THREE.BoxGeometry(0.8, 0.5, 1.0);
         const toolPostMesh = new THREE.Mesh(toolPostBase, new THREE.MeshStandardMaterial({ color: 0x27ae60, roughness: 0.5 }));
-        toolPostMesh.position.set(0, 0.5, 0.8); // Z = 0.8 (перед деталью)
+        toolPostMesh.position.set(0, 0.5, 0.8);
         toolPostMesh.castShadow = true;
         toolPostMesh.receiveShadow = true;
-        toolGroup.add(toolPostMesh);
+        this.toolGroup.add(toolPostMesh);
         
-        // Желтая каретка - ТОЖЕ ПЕРЕД ДЕТАЛЬЮ
+        // Желтая каретка
         const carriageGeo = new THREE.BoxGeometry(0.6, 0.3, 0.7);
         const carriageMesh = new THREE.Mesh(carriageGeo, new THREE.MeshStandardMaterial({ color: 0xf1c40f, roughness: 0.3 }));
-        carriageMesh.position.set(0.2, 0.9, 0.7); // Z = 0.7
+        carriageMesh.position.set(0.2, 0.9, 0.7);
         carriageMesh.castShadow = true;
         carriageMesh.receiveShadow = true;
-        toolGroup.add(carriageMesh);
+        this.toolGroup.add(carriageMesh);
         
         // Резцедержатель
         const holderGeo = new THREE.BoxGeometry(0.3, 0.2, 0.4);
         const holderMesh = new THREE.Mesh(holderGeo, new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.4 }));
-        holderMesh.position.set(0.6, 0.9, 0.5); // Z = 0.5
+        holderMesh.position.set(0.6, 0.9, 0.5);
         holderMesh.castShadow = true;
         holderMesh.receiveShadow = true;
-        toolGroup.add(holderMesh);
+        this.toolGroup.add(holderMesh);
         
-        // Резец - ВЫДВИНУТ К ДЕТАЛИ
+        // Резец (красный)
         const cutterGeo = new THREE.ConeGeometry(0.1, 0.4, 6);
         this.tool = new THREE.Mesh(cutterGeo, toolMaterial);
-        this.tool.position.set(0.8, 0.9, 0.3); // Z = 0.3 (ближе к детали)
+        this.tool.position.set(0.8, 0.9, 0.3);
         this.tool.rotation.x = Math.PI / 2;
         this.tool.castShadow = true;
         this.tool.receiveShadow = true;
-        toolGroup.add(this.tool);
+        this.toolGroup.add(this.tool);
         
-        // Наконечник - КАСАЕТСЯ ПОВЕРХНОСТИ ДЕТАЛИ (Z = 0.25)
+        // Наконечник резца (острие)
         const tipGeo = new THREE.SphereGeometry(0.02, 4);
         const tip = new THREE.Mesh(tipGeo, new THREE.MeshStandardMaterial({ color: 0xffaa00 }));
-        tip.position.set(0.95, 0.9, 0.25); // Z = 0.25 (точно на поверхности)
-        toolGroup.add(tip);
+        tip.position.set(0.95, 0.9, 0.25);
+        this.toolGroup.add(tip);
         
-        // Начальная позиция - У ЗАДНЕЙ БАБКИ, НО НЕ ВНУТРИ
-        toolGroup.position.set(1.3, 0, 0); // Старт справа, с отступом от задней бабки
+        // Начальная позиция (справа)
+        this.toolGroup.position.set(2.1, 0, 0);
         
-        this.scene.add(toolGroup);
-        this.toolGroup = toolGroup;
+        this.scene.add(this.toolGroup);
         
-        // Стружка
-        this.chips = [];
+        // ========== СТРУЖКА ==========
         const chipMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, roughness: 0.2, metalness: 0.8 });
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 20; i++) {
             const chipGeo = new THREE.BoxGeometry(0.05 + Math.random() * 0.1, 0.01, 0.05 + Math.random() * 0.1);
             const chip = new THREE.Mesh(chipGeo, chipMaterial);
             chip.visible = false;
@@ -363,16 +384,15 @@ class LatheSimulator3D {
     }
     
     reset() {
-        this.toolPosition = this.minToolTravel;
+        this.toolPosition = 0;
         if (this.toolGroup) {
-            this.toolGroup.position.x = 1.3; // У задней бабки
+            this.toolGroup.position.x = 2.1;
         }
         if (this.workpiece) {
             this.workpiece.scale.set(1, 1, 1);
             this.workpiece.material.color.setHex(0x3498db);
         }
-        this.materialRemoved = new Array(20).fill(0);
-        this.currentSegment = 0;
+        this.materialRemoved = 0;
         
         this.chips.forEach(chip => {
             chip.visible = false;
@@ -384,6 +404,7 @@ class LatheSimulator3D {
         
         this.animationId = requestAnimationFrame(() => this.animate());
         
+        // Обновление скорости из UI
         const speedControl = document.getElementById('speedControl');
         if (speedControl) {
             this.rotationSpeed = 0.02 * parseFloat(speedControl.value);
@@ -391,7 +412,7 @@ class LatheSimulator3D {
         
         const feedControl = document.getElementById('feedControl');
         if (feedControl) {
-            this.feedRate = 0.005 * parseFloat(feedControl.value);
+            this.feedRate = 0.002 * parseFloat(feedControl.value);
         }
         
         // Вращение заготовки
@@ -399,65 +420,55 @@ class LatheSimulator3D {
             this.workpiece.rotation.x += this.rotationSpeed;
         }
         
-        // Движение резца ОТ ЗАДНЕЙ БАБКИ К ПЕРЕДНЕЙ (СПРАВА НАЛЕВО)
+        // Движение резца СПРАВА НАЛЕВО
         if (this.toolGroup) {
             if (this.toolPosition < this.maxToolTravel) {
                 this.toolPosition += this.feedRate;
                 
-                // Плавное движение от x = 1.3 до x = -1.1
-                const xPos = 1.3 - (this.toolPosition - this.minToolTravel) / (this.maxToolTravel - this.minToolTravel) * 2.4;
-                this.toolGroup.position.x = xPos;
+                // Пересчет позиции: от x = 2.1 (справа) до x = -1.7 (слева)
+                const startX = 2.1;
+                const endX = -1.7;
+                const newX = startX - (this.toolPosition / this.maxToolTravel) * (startX - endX);
+                this.toolGroup.position.x = newX;
                 
-                // Определяем сегмент детали
-                const segment = Math.floor((this.toolPosition - this.minToolTravel) / (this.maxToolTravel - this.minToolTravel) * 20);
-                
-                // Обновляем прогресс для текущего сегмента
-                if (segment < 20 && segment >= 0 && segment !== this.currentSegment) {
-                    this.currentSegment = segment;
-                    if (this.materialRemoved[segment] < 0.7) {
-                        this.materialRemoved[segment] += 0.02;
-                    }
-                }
-                
-                // Вычисляем средний прогресс
-                let totalProgress = 0;
-                for (let i = 0; i < 20; i++) {
-                    totalProgress += this.materialRemoved[i];
-                }
-                const avgProgress = totalProgress / 20;
-                
-                // Уменьшаем диаметр (но не длину!)
-                const diameterScale = 1 - avgProgress * 0.3;
-                this.workpiece.scale.set(diameterScale, diameterScale, 1);
-                
-                // Меняем цвет от синего к серебристому
-                const color = new THREE.Color().lerpColors(
-                    new THREE.Color(0x3498db),
-                    new THREE.Color(0xbdc3c7),
-                    avgProgress
-                );
-                this.workpiece.material.color.set(color);
-                
-                // Стружка
-                if (Math.random() < 0.1 && avgProgress > 0.1) {
-                    const chip = this.chips.find(c => !c.visible);
-                    if (chip) {
-                        chip.position.set(
-                            this.toolGroup.position.x + 0.5,
-                            0.9 + Math.random() * 0.3,
-                            0.4 + Math.random() * 0.3
-                        );
-                        chip.rotation.set(Math.random(), Math.random(), Math.random());
-                        chip.visible = true;
-                        
-                        setTimeout(() => {
-                            if (chip) chip.visible = false;
-                        }, 300);
+                // Визуализация снятия материала
+                if (this.toolPosition > 0.3) {
+                    // Прогресс обработки
+                    this.materialRemoved = Math.min(0.8, (this.toolPosition / this.maxToolTravel) * 0.7);
+                    
+                    // ИСПРАВЛЕНО: Уменьшаем ТОЛЬКО радиус (масштабируем по X и Y)
+                    const radiusScale = 1 - this.materialRemoved * 0.3;
+                    this.workpiece.scale.set(radiusScale, radiusScale, 1); // Длина (Z) не меняется
+                    
+                    // Меняем цвет от синего к серебристому
+                    const color = new THREE.Color().lerpColors(
+                        new THREE.Color(0x3498db),
+                        new THREE.Color(0xbdc3c7),
+                        this.materialRemoved
+                    );
+                    this.workpiece.material.color.set(color);
+                    
+                    // Эффект стружки
+                    if (Math.random() < 0.15 && this.materialRemoved > 0.1) {
+                        const chip = this.chips.find(c => !c.visible);
+                        if (chip) {
+                            chip.position.set(
+                                this.toolGroup.position.x + 0.5,
+                                0.9 + Math.random() * 0.4,
+                                0.3 + Math.random() * 0.4
+                            );
+                            chip.rotation.set(Math.random(), Math.random(), Math.random());
+                            chip.visible = true;
+                            
+                            setTimeout(() => {
+                                if (chip) chip.visible = false;
+                            }, 400);
+                        }
                     }
                 }
             } else {
-                // Дошли до передней бабки - возвращаемся к задней
-                this.toolPosition = this.minToolTravel;
+                // Дошли до конца - возвращаем в начало
+                this.toolPosition = 0;
             }
         }
         
@@ -465,10 +476,11 @@ class LatheSimulator3D {
     }
 }
 
+// Основной класс приложения
 class LatheTextbook {
     constructor() {
         this.currentChapter = 1;
-        this.totalChapters = 11;
+        this.totalChapters = 12;
         this.completedChapters = 1;
         
         this.testState = {
@@ -484,7 +496,7 @@ class LatheTextbook {
             }
         };
         
-        // Данные для интерактивных частей
+        // Данные для модальных окон
         this.partsData = {
             headstock: {
                 title: 'Передняя бабка',
@@ -622,17 +634,9 @@ class LatheTextbook {
         document.querySelector('.main-content').scrollTop = 0;
         
         // Handle simulators
-        if (num === 11) {
-            // Старый canvas симулятор
-            if (this.ctx) {
-                this.startSimulator();
-            }
-            // Новый 3D симулятор
+        if (num === 12) {
             this.init3DSimulator();
         } else {
-            // Останавливаем старый симулятор
-            this.stopSimulator();
-            // Останавливаем новый 3D симулятор
             if (this.simulator3D) {
                 this.simulator3D.stop();
             }
@@ -860,26 +864,6 @@ class LatheTextbook {
     }
     
     setupSimulator() {
-        // Старый canvas симулятор
-        const canvas = document.getElementById('latheSimulator');
-        if (canvas) {
-            this.ctx = canvas.getContext('2d');
-            this.animationId = null;
-            this.workpieceRotation = 0;
-            this.toolPosition = 0;
-
-            const startBtn = document.getElementById('startSimulation');
-            const stopBtn = document.getElementById('stopSimulation');
-            
-            if (startBtn) {
-                startBtn.addEventListener('click', () => this.startSimulator());
-            }
-            if (stopBtn) {
-                stopBtn.addEventListener('click', () => this.stopSimulator());
-            }
-        }
-        
-        // Новый 3D симулятор
         this.setupSimulator3D();
     }
     
@@ -899,21 +883,23 @@ class LatheTextbook {
     }
     
     init3DSimulator() {
-        // Создаем экземпляр 3D симулятора только если мы на главе 11
-        if (this.currentChapter === 11) {
+        // Создаем экземпляр 3D симулятора только если мы на главе 12
+        if (this.currentChapter === 12) {
             if (this.simulator3D) {
                 this.simulator3D.stop();
+                this.simulator3D = null;
             }
-            this.simulator3D = new LatheSimulator3D();
             
-            // Подключаем кнопки управления
+            // Небольшая задержка для гарантии, что контейнер готов
             setTimeout(() => {
+                this.simulator3D = new LatheSimulator3D();
+                
+                // Подключаем кнопки управления
                 const startBtn = document.getElementById('startSimulation3d');
                 const stopBtn = document.getElementById('stopSimulation3d');
                 const resetBtn = document.getElementById('resetSimulation3d');
                 
                 if (startBtn) {
-                    // Удаляем старые обработчики
                     const newStartBtn = startBtn.cloneNode(true);
                     startBtn.parentNode.replaceChild(newStartBtn, startBtn);
                     
@@ -943,69 +929,6 @@ class LatheTextbook {
                     });
                 }
             }, 100);
-        }
-    }
-    
-    startSimulator() {
-        if (this.animationId) return;
-
-        const animate = () => {
-            if (!this.ctx) return;
-            
-            this.ctx.clearRect(0, 0, 800, 400);
-
-            // Станина
-            this.ctx.fillStyle = '#95A5A6';
-            this.ctx.fillRect(50, 250, 700, 50);
-
-            // Передняя бабка
-            this.ctx.fillStyle = '#E67E22';
-            this.ctx.fillRect(80, 100, 130, 150);
-
-            // Патрон
-            this.ctx.fillStyle = '#7F8C8D';
-            this.ctx.beginPath();
-            this.ctx.arc(240, 200, 40, 0, 2 * Math.PI);
-            this.ctx.fill();
-
-            // Заготовка
-            this.ctx.save();
-            this.ctx.translate(240, 200);
-            this.ctx.rotate(this.workpieceRotation);
-            this.ctx.fillStyle = '#3498DB';
-            this.ctx.fillRect(0, -10, 400, 20);
-            this.ctx.restore();
-
-            // Задняя бабка
-            this.ctx.fillStyle = '#E67E22';
-            this.ctx.fillRect(640, 110, 110, 140);
-
-            // Суппорт
-            this.ctx.fillStyle = '#27AE60';
-            this.ctx.fillRect(300 + this.toolPosition, 200, 80, 50);
-
-            // Резец
-            this.ctx.fillStyle = '#E74C3C';
-            this.ctx.beginPath();
-            this.ctx.moveTo(380 + this.toolPosition, 200);
-            this.ctx.lineTo(400 + this.toolPosition, 190);
-            this.ctx.lineTo(400 + this.toolPosition, 210);
-            this.ctx.fill();
-
-            this.workpieceRotation += 0.1; // Вращение заготовки
-            this.toolPosition += 0.5; // Движение резца
-            if (this.toolPosition > 300) this.toolPosition = 0; // Сброс позиции
-
-            this.animationId = requestAnimationFrame(animate);
-        };
-
-        animate();
-    }
-    
-    stopSimulator() {
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
         }
     }
 }
