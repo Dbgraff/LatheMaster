@@ -3,7 +3,7 @@ if (typeof THREE === 'undefined') {
     console.log('Three.js will be loaded dynamically');
 }
 
-// 2.5D симулятор с Three.js (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+// 2.5D симулятор с Three.js (ФИНАЛЬНАЯ ВЕРСИЯ - УМЕНЬШЕННЫЙ ПАТРОН)
 class LatheSimulator3D {
     constructor() {
         this.scene = null;
@@ -12,7 +12,8 @@ class LatheSimulator3D {
         this.controls = null;
         this.animationId = null;
         
-        this.workpiece = null;
+        this.workpieceSegments = [];
+        this.chuck = null;
         this.tool = null;
         this.toolGroup = null;
         this.chips = [];
@@ -20,12 +21,10 @@ class LatheSimulator3D {
         // Исправленные параметры
         this.rotationSpeed = 0.02;
         this.feedRate = 0.002;
-        this.toolPosition = 0; // 0 = начальная позиция (справа)
-        this.maxToolTravel = 3.8;
+        this.toolPosition = 0;
+        this.maxToolTravel = 2.4;
         
-        // Прогресс обработки
         this.materialRemoved = 0; 
-        
         this.isRunning = false;
         
         this.init();
@@ -49,7 +48,7 @@ class LatheSimulator3D {
         container.innerHTML = '';
         container.appendChild(this.renderer.domElement);
         
-        // Lights
+        // Освещение
         const ambientLight = new THREE.AmbientLight(0x404060);
         this.scene.add(ambientLight);
         
@@ -90,7 +89,6 @@ class LatheSimulator3D {
         // ========== СТАНИНА ==========
         const bedGroup = new THREE.Group();
         
-        // Основная балка станины
         const bedBeam = new THREE.BoxGeometry(6.5, 0.3, 1.2);
         const bedMesh = new THREE.Mesh(bedBeam, metalMaterial);
         bedMesh.position.set(-0.2, 0.15, 0);
@@ -98,7 +96,6 @@ class LatheSimulator3D {
         bedMesh.receiveShadow = true;
         bedGroup.add(bedMesh);
         
-        // Направляющие
         const wayGeo = new THREE.BoxGeometry(6.5, 0.15, 0.25);
         const way1 = new THREE.Mesh(wayGeo, accentMaterial);
         way1.position.set(-0.2, 0.4, -0.4);
@@ -116,10 +113,9 @@ class LatheSimulator3D {
         this.scene.add(bedGroup);
         this.bed = bedGroup;
         
-        // ========== ПЕРЕДНЯЯ БАБКА (ИСПРАВЛЕНО) ==========
+        // ========== ПЕРЕДНЯЯ БАБКА ==========
         const headstockGroup = new THREE.Group();
         
-        // Основание передней бабки
         const headstockBase = new THREE.BoxGeometry(1.4, 1.0, 1.2);
         const headstockMesh = new THREE.Mesh(headstockBase, accentMaterial);
         headstockMesh.position.set(-2.4, 0.7, 0);
@@ -136,31 +132,37 @@ class LatheSimulator3D {
         spindleMesh.receiveShadow = true;
         headstockGroup.add(spindleMesh);
         
-        // Патрон
+        this.scene.add(headstockGroup);
+        this.headstock = headstockGroup;
+        
+        // ========== ПАТРОН (УМЕНЬШЕННЫЙ) ==========
         const chuckGroup = new THREE.Group();
-        const chuckBody = new THREE.CylinderGeometry(0.7, 0.7, 0.6, 8);
+        
+        // Корпус патрона: диаметр 0.6 (радиус 0.3), высота 0.6
+        const chuckBody = new THREE.CylinderGeometry(0.3, 0.3, 0.6, 8);
         const chuckMesh = new THREE.Mesh(chuckBody, new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.3, metalness: 0.7 }));
-        chuckMesh.position.set(-1.2, 0.8, 0);
+        chuckMesh.position.set(0, 0, 0);
         chuckMesh.rotation.z = Math.PI / 2;
         chuckMesh.castShadow = true;
         chuckMesh.receiveShadow = true;
         chuckGroup.add(chuckMesh);
         
-        // Кулачки патрона
+        // Кулачки на поверхности патрона (радиус 0.3)
         for (let i = 0; i < 3; i++) {
             const jawGeo = new THREE.BoxGeometry(0.15, 0.25, 0.25);
             const jaw = new THREE.Mesh(jawGeo, new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.2, metalness: 0.8 }));
             const angle = (i / 3) * Math.PI * 2;
-            jaw.position.set(-1.2, 0.8 + Math.sin(angle) * 0.5, Math.cos(angle) * 0.5);
+            jaw.position.set(0, Math.sin(angle) * 0.3, Math.cos(angle) * 0.3);
             jaw.castShadow = true;
             jaw.receiveShadow = true;
             chuckGroup.add(jaw);
         }
-        headstockGroup.add(chuckGroup);
-        this.scene.add(headstockGroup);
-        this.headstock = headstockGroup;
         
-        // ========== ЗАДНЯЯ БАБКА (ИСПРАВЛЕНО) ==========
+        chuckGroup.position.set(-1.2, 0.85, 0);
+        this.scene.add(chuckGroup);
+        this.chuck = chuckGroup;
+        
+        // ========== ЗАДНЯЯ БАБКА ==========
         const tailstockGroup = new THREE.Group();
         
         // Основание задней бабки
@@ -171,7 +173,6 @@ class LatheSimulator3D {
         tailstockMesh.receiveShadow = true;
         tailstockGroup.add(tailstockMesh);
         
-        // Корпус
         const tailstockBody = new THREE.BoxGeometry(0.6, 0.7, 1.0);
         const bodyMesh = new THREE.Mesh(tailstockBody, metalMaterial);
         bodyMesh.position.set(2.5, 0.9, 0);
@@ -179,7 +180,6 @@ class LatheSimulator3D {
         bodyMesh.receiveShadow = true;
         tailstockGroup.add(bodyMesh);
         
-        // Пиноль (выдвижная часть) - направлена ВЛЕВО
         const quillGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 8);
         const quill = new THREE.Mesh(quillGeo, metalMaterial);
         quill.position.set(2.0, 0.9, 0);
@@ -197,7 +197,6 @@ class LatheSimulator3D {
         center.receiveShadow = true;
         tailstockGroup.add(center);
         
-        // Маховик (сзади)
         const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 8);
         const wheel = new THREE.Mesh(wheelGeo, new THREE.MeshStandardMaterial({ color: 0x2c3e50 }));
         wheel.position.set(2.8, 0.9, 0.5);
@@ -209,36 +208,59 @@ class LatheSimulator3D {
         this.scene.add(tailstockGroup);
         this.tailstock = tailstockGroup;
         
-        // ========== ЗАГОТОВКА (ИСПРАВЛЕНО МАСШТАБИРОВАНИЕ) ==========
-        const workpieceMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x3498db, 
-            roughness: 0.3, 
-            metalness: 0.2,
-            emissive: 0x000000
-        });
+        // ========== ЗАГОТОВКА (40 СЕГМЕНТОВ, ДЛИНА 2.6) ==========
+        const totalLength = 2.6;
+        const startX = -1.0;
+        const endX = 1.6;
+        const numSegments = 40;
+        const segmentLength = totalLength / numSegments;
+        const radius = 0.2;
+        const baseColor = 0x3498db;
+        const processedColor = 0xbdc3c7;
         
-        // Заготовка - цилиндр вдоль оси X
-        const workpieceGeo = new THREE.CylinderGeometry(0.3, 0.3, 4.0, 24);
-        this.workpiece = new THREE.Mesh(workpieceGeo, workpieceMaterial);
-        this.workpiece.position.set(0.3, 0.8, 0);
-        this.workpiece.rotation.z = Math.PI / 2;
-        this.workpiece.castShadow = true;
-        this.workpiece.receiveShadow = true;
-        this.scene.add(this.workpiece);
+        const segmentGeo = new THREE.CylinderGeometry(radius, radius, segmentLength, 12);
+        
+        for (let i = 0; i < numSegments; i++) {
+            const centerX = startX + segmentLength * (i + 0.5);
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: baseColor,
+                roughness: 0.3,
+                metalness: 0.2
+            });
+            
+            const segment = new THREE.Mesh(segmentGeo, material);
+            segment.position.set(centerX, 0.85, 0);
+            segment.rotation.z = Math.PI / 2;
+            segment.castShadow = true;
+            segment.receiveShadow = true;
+            
+            segment.userData = {
+                left: centerX - segmentLength/2,
+                right: centerX + segmentLength/2,
+                baseColor: baseColor,
+                processedColor: processedColor,
+                material: material,
+                processed: false
+            };
+            
+            this.scene.add(segment);
+            this.workpieceSegments.push(segment);
+        }
         
         // Торцевые заглушки
         const capMaterial = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.5 });
-        const capGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.15, 12);
+        const capGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.15, 12);
         
         const cap1 = new THREE.Mesh(capGeo, capMaterial);
-        cap1.position.set(-1.7, 0.8, 0);
+        cap1.position.set(-1.0, 0.85, 0);
         cap1.rotation.z = Math.PI / 2;
         cap1.castShadow = true;
         cap1.receiveShadow = true;
         this.scene.add(cap1);
         
         const cap2 = new THREE.Mesh(capGeo, capMaterial);
-        cap2.position.set(2.3, 0.8, 0);
+        cap2.position.set(1.6, 0.85, 0);
         cap2.rotation.z = Math.PI / 2;
         cap2.castShadow = true;
         cap2.receiveShadow = true;
@@ -247,7 +269,6 @@ class LatheSimulator3D {
         // ========== СУППОРТ С РЕЗЦОМ ==========
         this.toolGroup = new THREE.Group();
         
-        // Суппорт (зеленое основание)
         const toolPostBase = new THREE.BoxGeometry(0.8, 0.5, 1.0);
         const toolPostMesh = new THREE.Mesh(toolPostBase, new THREE.MeshStandardMaterial({ color: 0x27ae60, roughness: 0.5 }));
         toolPostMesh.position.set(0, 0.5, 0.8);
@@ -255,7 +276,6 @@ class LatheSimulator3D {
         toolPostMesh.receiveShadow = true;
         this.toolGroup.add(toolPostMesh);
         
-        // Желтая каретка
         const carriageGeo = new THREE.BoxGeometry(0.6, 0.3, 0.7);
         const carriageMesh = new THREE.Mesh(carriageGeo, new THREE.MeshStandardMaterial({ color: 0xf1c40f, roughness: 0.3 }));
         carriageMesh.position.set(0.2, 0.9, 0.7);
@@ -263,7 +283,6 @@ class LatheSimulator3D {
         carriageMesh.receiveShadow = true;
         this.toolGroup.add(carriageMesh);
         
-        // Резцедержатель
         const holderGeo = new THREE.BoxGeometry(0.3, 0.2, 0.4);
         const holderMesh = new THREE.Mesh(holderGeo, new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.4 }));
         holderMesh.position.set(0.6, 0.9, 0.5);
@@ -271,29 +290,20 @@ class LatheSimulator3D {
         holderMesh.receiveShadow = true;
         this.toolGroup.add(holderMesh);
         
-        // Резец (красный)
         const cutterGeo = new THREE.ConeGeometry(0.1, 0.4, 6);
         this.tool = new THREE.Mesh(cutterGeo, toolMaterial);
-        this.tool.position.set(0.8, 0.9, 0.3);
+        this.tool.position.set(0.8, 0.85, 0.25);
         this.tool.rotation.x = Math.PI / 2;
         this.tool.castShadow = true;
         this.tool.receiveShadow = true;
         this.toolGroup.add(this.tool);
         
-        // Наконечник резца (острие)
-        const tipGeo = new THREE.SphereGeometry(0.02, 4);
-        const tip = new THREE.Mesh(tipGeo, new THREE.MeshStandardMaterial({ color: 0xffaa00 }));
-        tip.position.set(0.95, 0.9, 0.25);
-        this.toolGroup.add(tip);
-        
-        // Начальная позиция (справа)
-        this.toolGroup.position.set(2.1, 0, 0);
-        
+        this.toolGroup.position.set(0.75, 0, 0);
         this.scene.add(this.toolGroup);
         
         // ========== СТРУЖКА ==========
         const chipMaterial = new THREE.MeshStandardMaterial({ color: 0xc0c0c0, roughness: 0.2, metalness: 0.8 });
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 30; i++) {
             const chipGeo = new THREE.BoxGeometry(0.05 + Math.random() * 0.1, 0.01, 0.05 + Math.random() * 0.1);
             const chip = new THREE.Mesh(chipGeo, chipMaterial);
             chip.visible = false;
@@ -386,12 +396,12 @@ class LatheSimulator3D {
     reset() {
         this.toolPosition = 0;
         if (this.toolGroup) {
-            this.toolGroup.position.x = 2.1;
+            this.toolGroup.position.x = 0.75;
         }
-        if (this.workpiece) {
-            this.workpiece.scale.set(1, 1, 1);
-            this.workpiece.material.color.setHex(0x3498db);
-        }
+        this.workpieceSegments.forEach(segment => {
+            segment.material.color.setHex(segment.userData.baseColor);
+            segment.userData.processed = false;
+        });
         this.materialRemoved = 0;
         
         this.chips.forEach(chip => {
@@ -415,59 +425,51 @@ class LatheSimulator3D {
             this.feedRate = 0.002 * parseFloat(feedControl.value);
         }
         
-        // Вращение заготовки
-        if (this.workpiece) {
-            this.workpiece.rotation.x += this.rotationSpeed;
+        // Вращение заготовки и патрона
+        if (this.workpieceSegments.length > 0) {
+            this.workpieceSegments.forEach(segment => {
+                segment.rotation.x += this.rotationSpeed;
+            });
+        }
+        if (this.chuck) {
+            this.chuck.rotation.x += this.rotationSpeed;
         }
         
-        // Движение резца СПРАВА НАЛЕВО
         if (this.toolGroup) {
             if (this.toolPosition < this.maxToolTravel) {
                 this.toolPosition += this.feedRate;
                 
-                // Пересчет позиции: от x = 2.1 (справа) до x = -1.7 (слева)
-                const startX = 2.1;
-                const endX = -1.7;
+                const startX = 0.75;
+                const endX = -1.65;
                 const newX = startX - (this.toolPosition / this.maxToolTravel) * (startX - endX);
                 this.toolGroup.position.x = newX;
                 
-                // Визуализация снятия материала
-                if (this.toolPosition > 0.3) {
-                    // Прогресс обработки
-                    this.materialRemoved = Math.min(0.8, (this.toolPosition / this.maxToolTravel) * 0.7);
-                    
-                    // ИСПРАВЛЕНО: Уменьшаем ТОЛЬКО радиус (масштабируем по X и Y)
-                    const radiusScale = 1 - this.materialRemoved * 0.3;
-                    this.workpiece.scale.set(radiusScale, radiusScale, 1); // Длина (Z) не меняется
-                    
-                    // Меняем цвет от синего к серебристому
-                    const color = new THREE.Color().lerpColors(
-                        new THREE.Color(0x3498db),
-                        new THREE.Color(0xbdc3c7),
-                        this.materialRemoved
-                    );
-                    this.workpiece.material.color.set(color);
-                    
-                    // Эффект стружки
-                    if (Math.random() < 0.15 && this.materialRemoved > 0.1) {
-                        const chip = this.chips.find(c => !c.visible);
-                        if (chip) {
-                            chip.position.set(
-                                this.toolGroup.position.x + 0.5,
-                                0.9 + Math.random() * 0.4,
-                                0.3 + Math.random() * 0.4
-                            );
-                            chip.rotation.set(Math.random(), Math.random(), Math.random());
-                            chip.visible = true;
-                            
-                            setTimeout(() => {
-                                if (chip) chip.visible = false;
-                            }, 400);
-                        }
+                const toolGlobalX = newX + 0.95;
+                
+                this.workpieceSegments.forEach(segment => {
+                    if (!segment.userData.processed && toolGlobalX < segment.userData.right) {
+                        segment.userData.processed = true;
+                        segment.material.color.setHex(segment.userData.processedColor);
+                    }
+                });
+                
+                if (Math.random() < 0.15 && this.toolPosition > 0.1) {
+                    const chip = this.chips.find(c => !c.visible);
+                    if (chip) {
+                        chip.position.set(
+                            this.toolGroup.position.x + 0.5,
+                            0.85 + Math.random() * 0.3,
+                            0.2 + Math.random() * 0.2
+                        );
+                        chip.rotation.set(Math.random(), Math.random(), Math.random());
+                        chip.visible = true;
+                        
+                        setTimeout(() => {
+                            if (chip) chip.visible = false;
+                        }, 400);
                     }
                 }
             } else {
-                // Дошли до конца - возвращаем в начало
                 this.toolPosition = 0;
             }
         }
@@ -476,7 +478,7 @@ class LatheSimulator3D {
     }
 }
 
-// Основной класс приложения
+// Основной класс приложения (без изменений)
 class LatheTextbook {
     constructor() {
         this.currentChapter = 1;
@@ -496,7 +498,6 @@ class LatheTextbook {
             }
         };
         
-        // Данные для модальных окон
         this.partsData = {
             headstock: {
                 title: 'Передняя бабка',
@@ -574,7 +575,6 @@ class LatheTextbook {
     }
     
     setupNavigation() {
-        // Menu clicks
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 const chapter = e.currentTarget.dataset.chapter;
@@ -582,7 +582,6 @@ class LatheTextbook {
             });
         });
         
-        // Prev/Next buttons
         document.getElementById('prevChapterBtn').addEventListener('click', () => {
             if (this.currentChapter > 1) {
                 this.switchChapter(this.currentChapter - 1);
@@ -599,16 +598,13 @@ class LatheTextbook {
     switchChapter(num) {
         if (num < 1 || num > this.totalChapters) return;
         
-        // Hide all chapters
         document.querySelectorAll('.chapter').forEach(ch => {
             ch.classList.remove('active');
         });
         
-        // Show selected chapter
         const chapter = document.getElementById(`chapter${num}`);
         if (chapter) chapter.classList.add('active');
         
-        // Update menu
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -616,24 +612,19 @@ class LatheTextbook {
         const activeItem = document.querySelector(`.nav-item[data-chapter="${num}"]`);
         if (activeItem) activeItem.classList.add('active');
         
-        // Update current
         this.currentChapter = num;
         document.getElementById('currentChapterDisplay').textContent = num;
         
-        // Update buttons
         document.getElementById('prevChapterBtn').disabled = num === 1;
         document.getElementById('nextChapterBtn').disabled = num === this.totalChapters;
         
-        // Update progress
         if (num > this.completedChapters) {
             this.completedChapters = num;
             this.updateProgress();
         }
         
-        // Scroll to top
         document.querySelector('.main-content').scrollTop = 0;
         
-        // Handle simulators
         if (num === 12) {
             this.init3DSimulator();
         } else {
@@ -656,7 +647,6 @@ class LatheTextbook {
     }
     
     setupInteractiveElements() {
-        // Делаем строки таблицы кликабельными
         document.querySelectorAll('.data-table tbody tr').forEach(row => {
             row.addEventListener('click', (e) => {
                 const part = row.dataset.part;
@@ -674,19 +664,16 @@ class LatheTextbook {
         this.modalList = document.getElementById('modalList');
         this.modalSpecs = document.getElementById('modalSpecs');
         
-        // Close button
         document.querySelector('.modal-close').addEventListener('click', () => {
             this.modal.classList.remove('show');
         });
         
-        // Click outside to close
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.modal.classList.remove('show');
             }
         });
         
-        // ESC key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('show')) {
                 this.modal.classList.remove('show');
@@ -701,7 +688,6 @@ class LatheTextbook {
         this.modalTitle.textContent = data.title;
         this.modalDescription.textContent = data.description;
         
-        // Build list
         this.modalList.innerHTML = '';
         data.elements.forEach(el => {
             const li = document.createElement('li');
@@ -718,7 +704,6 @@ class LatheTextbook {
         this.testCurrent = 1;
         this.testAnswers = {};
         
-        // Elements
         this.testProgress = document.getElementById('testProgress');
         this.testCounter = document.getElementById('testCounter');
         this.testQuestion = document.getElementById('testQuestion');
@@ -729,7 +714,6 @@ class LatheTextbook {
         this.resultScore = document.getElementById('resultScore');
         this.testRestart = document.getElementById('testRestart');
         
-        // Questions data
         this.questions = {
             1: {
                 text: '1. Какой узел токарного станка служит для закрепления и вращения заготовки?',
@@ -753,13 +737,11 @@ class LatheTextbook {
             }
         };
         
-        // Event listeners
         this.testPrev.addEventListener('click', () => this.prevQuestion());
         this.testNext.addEventListener('click', () => this.nextQuestion());
         this.testSubmit.addEventListener('click', () => this.submitTest());
         this.testRestart.addEventListener('click', () => this.restartTest());
         
-        // Load first question
         this.loadTestQuestion(1);
     }
     
@@ -767,11 +749,9 @@ class LatheTextbook {
         const question = this.questions[num];
         if (!question) return;
         
-        // Update progress bar
         this.testProgress.style.width = (num / this.testState.total * 100) + '%';
         this.testCounter.textContent = `${num}/${this.testState.total}`;
         
-        // Build question HTML
         let html = `<p class="question-text">${question.text}</p>`;
         html += '<div class="test-options">';
         
@@ -789,7 +769,6 @@ class LatheTextbook {
         html += '</div>';
         this.testQuestion.innerHTML = html;
         
-        // Add event listeners to radio buttons
         document.querySelectorAll(`.test-option input[name="q${num}"]`).forEach(radio => {
             radio.addEventListener('change', (e) => {
                 this.testAnswers[num] = e.target.value;
@@ -797,7 +776,6 @@ class LatheTextbook {
             });
         });
         
-        // Update buttons
         this.testPrev.disabled = num === 1;
         this.testNext.style.display = num === this.testState.total ? 'none' : 'block';
         this.testSubmit.style.display = num === this.testState.total ? 'block' : 'none';
@@ -812,7 +790,6 @@ class LatheTextbook {
     
     nextQuestion() {
         if (this.testCurrent < this.testState.total) {
-            // Save answer for current question
             const selected = document.querySelector(`input[name="q${this.testCurrent}"]:checked`);
             if (selected) {
                 this.testAnswers[this.testCurrent] = selected.value;
@@ -825,14 +802,12 @@ class LatheTextbook {
     }
     
     submitTest() {
-        // Save last answer
         const selected = document.querySelector(`input[name="q${this.testCurrent}"]:checked`);
         if (selected) {
             this.testAnswers[this.testCurrent] = selected.value;
             this.testState.answers[this.testCurrent] = selected.value;
         }
         
-        // Calculate score
         let correct = 0;
         for (let i = 1; i <= this.testState.total; i++) {
             if (this.testAnswers[i] === this.testState.correct[i]) {
@@ -840,7 +815,6 @@ class LatheTextbook {
             }
         }
         
-        // Show result
         this.testQuestion.style.display = 'none';
         const testFooter = document.querySelector('.test-footer');
         if (testFooter) testFooter.style.display = 'none';
@@ -853,13 +827,11 @@ class LatheTextbook {
         this.testAnswers = {};
         this.testState.answers = {};
         
-        // Reset UI
         this.testQuestion.style.display = 'block';
         const testFooter = document.querySelector('.test-footer');
         if (testFooter) testFooter.style.display = 'flex';
         this.testResult.style.display = 'none';
         
-        // Load first question
         this.loadTestQuestion(1);
     }
     
@@ -868,9 +840,7 @@ class LatheTextbook {
     }
     
     setupSimulator3D() {
-        // Проверяем, загружена ли библиотека Three.js
         if (typeof THREE === 'undefined') {
-            // Загружаем Three.js динамически
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
             script.onload = () => {
@@ -883,18 +853,15 @@ class LatheTextbook {
     }
     
     init3DSimulator() {
-        // Создаем экземпляр 3D симулятора только если мы на главе 12
         if (this.currentChapter === 12) {
             if (this.simulator3D) {
                 this.simulator3D.stop();
                 this.simulator3D = null;
             }
             
-            // Небольшая задержка для гарантии, что контейнер готов
             setTimeout(() => {
                 this.simulator3D = new LatheSimulator3D();
                 
-                // Подключаем кнопки управления
                 const startBtn = document.getElementById('startSimulation3d');
                 const stopBtn = document.getElementById('stopSimulation3d');
                 const resetBtn = document.getElementById('resetSimulation3d');
