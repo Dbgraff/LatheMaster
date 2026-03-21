@@ -1,335 +1,305 @@
 // LatheTextbook.js
-import { partsData, questions, correctAnswers } from './data.js';
+import { chaptersData } from './data.js';
 import { LatheSimulator3D } from './LatheSimulator3D.js';
 
 export class LatheTextbook {
     constructor() {
         this.currentChapter = 1;
-        this.totalChapters = 12;
+        this.totalChapters = 10;
         this.completedChapters = 1;
-        
-        this.testState = {
-            current: 1,
-            total: 5,
-            answers: {},
-            correct: correctAnswers
-        };
-        
-        this.partsData = partsData;
-        this.questions = questions;
-        
-        this.simulator3D = null;
-        this.init();
+
+        // DOM элементы
+        this.navItems = document.querySelectorAll('.nav-item');
+        this.prevBtn = document.getElementById('prevChapterBtn');
+        this.nextBtn = document.getElementById('nextChapterBtn');
+        this.currentChapterDisplay = document.getElementById('currentChapterDisplay');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressPercent = document.getElementById('progressPercent');
+        this.progressText = document.getElementById('progressText');
+        this.infoModal = document.getElementById('info-modal');
+        this.modalTitle = document.getElementById('modal-title');
+        this.modalBody = document.getElementById('modal-body');
+        this.closeModalBtn = document.querySelector('.modal-close');
+        this.infoToggle = document.getElementById('info-toggle');
+        this.viewerContainer = document.getElementById('viewer-container');
+        this.testContainer = document.getElementById('test-container');
+        this.simulatorContainer = document.getElementById('simulator-container');
+
+        // Three.js элементы
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controls = null;
+        this.model = null;
+        this.mixer = null;
+        this.clock = new THREE.Clock();
+
+        // Симулятор
+        this.simulator = null;
+
+        this.initThree();
+        this.setupEventListeners();
+        this.switchChapter(1); // начать с первой главы
     }
-    
-    init() {
-        this.setupNavigation();
-        this.setupInteractiveElements();
-        this.setupModal();
-        this.setupTest();
-        this.setupSimulator();
-        this.updateProgress();
-    }
-    
-    setupNavigation() {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const chapter = e.currentTarget.dataset.chapter;
-                this.switchChapter(parseInt(chapter));
+
+    initThree() {
+        const container = document.getElementById('threejs-viewer');
+        if (!container) return;
+
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0a0d14);
+
+        this.camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        this.camera.position.set(3, 2, 5);
+        this.camera.lookAt(0, 1, 0);
+
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer.setSize(container.clientWidth, container.clientHeight);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(this.renderer.domElement);
+
+        // Освещение
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        this.scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(3, 8, 5);
+        dirLight.castShadow = true;
+        dirLight.receiveShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        const d = 8;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.bottom = -d;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 15;
+        this.scene.add(dirLight);
+
+        const fillLight = new THREE.PointLight(0x446688, 0.5);
+        fillLight.position.set(-2, 4, 3);
+        this.scene.add(fillLight);
+
+        const gridHelper = new THREE.GridHelper(8, 20, 0x88aadd, 0x335577);
+        gridHelper.position.y = 0;
+        this.scene.add(gridHelper);
+
+        // Контроллер
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+        this.controls.autoRotate = false;
+        this.controls.enableZoom = true;
+        this.controls.target.set(0, 1, 0);
+
+        // Загрузка FBX модели
+        const loader = new THREE.FBXLoader();
+        loader.load('models/lathe.FBX', (object) => {
+            this.model = object;
+            this.model.scale.setScalar(0.001);
+            //this.model.rotation.y = -Math.PI / 2; // при необходимости
+            this.model.position.set(-2, 0, 0);
+            this.scene.add(this.model);
+
+            this.model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
             });
+
+            this.mixer = new THREE.AnimationMixer(this.model);
+        }, undefined, (error) => {
+            console.error('Ошибка загрузки модели:', error);
+            this.addPlaceholderModel();
         });
-        
-        document.getElementById('prevChapterBtn').addEventListener('click', () => {
-            if (this.currentChapter > 1) {
-                this.switchChapter(this.currentChapter - 1);
-            }
-        });
-        
-        document.getElementById('nextChapterBtn').addEventListener('click', () => {
-            if (this.currentChapter < this.totalChapters) {
-                this.switchChapter(this.currentChapter + 1);
-            }
-        });
+
+        window.addEventListener('resize', () => this.onWindowResize());
+        this.animate();
     }
-    
+
+    addPlaceholderModel() {
+        const mat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const base = new THREE.Mesh(new THREE.BoxGeometry(6, 0.2, 1.5), mat);
+        base.position.set(0, 0.1, 0);
+        this.scene.add(base);
+
+        const headstock = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xe67e22 }));
+        headstock.position.set(-2, 0.7, 0);
+        this.scene.add(headstock);
+
+        const tailstock = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xe67e22 }));
+        tailstock.position.set(2, 0.7, 0);
+        this.scene.add(tailstock);
+
+        const carriage = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 1), new THREE.MeshStandardMaterial({ color: 0x27ae60 }));
+        carriage.position.set(0, 0.5, 0.5);
+        this.scene.add(carriage);
+    }
+
+    onWindowResize() {
+        const container = document.getElementById('threejs-viewer');
+        if (!container) return;
+        this.camera.aspect = container.clientWidth / container.clientHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        const delta = this.clock.getDelta();
+        if (this.mixer) this.mixer.update(delta);
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    flyTo(targetPos, targetLook) {
+        const duration = 1.5;
+        const startPos = this.camera.position.clone();
+        const startTarget = this.controls.target.clone();
+        const endPos = new THREE.Vector3(targetPos[0], targetPos[1], targetPos[2]);
+        const endTarget = new THREE.Vector3(targetLook[0], targetLook[1], targetLook[2]);
+
+        let startTime = null;
+
+        const animateCamera = (time) => {
+            if (!startTime) startTime = time;
+            const elapsed = (time - startTime) / 1000;
+            const t = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+
+            this.camera.position.lerpVectors(startPos, endPos, eased);
+            this.controls.target.lerpVectors(startTarget, endTarget, eased);
+            this.controls.update();
+
+            if (t < 1) {
+                requestAnimationFrame(animateCamera);
+            }
+        };
+        requestAnimationFrame(animateCamera);
+    }
+
+    showInfoModal(chapter) {
+        const data = chaptersData[chapter];
+        if (!data) return;
+
+        this.modalTitle.textContent = data.title;
+
+        let html = '';
+        if (data.content) {
+            html = data.content;
+        } else {
+            html = `
+                <div class="info-card">
+                    <h3>${data.title}</h3>
+                    <p>${data.description}</p>
+                    <h4>Основные элементы:</h4>
+                    <ul>${data.elements.map(el => `<li>${el}</li>`).join('')}</ul>
+                    <div class="modal-specs"><strong>Характеристики:</strong> ${data.specs}</div>
+                </div>
+            `;
+        }
+        this.modalBody.innerHTML = html;
+        this.infoModal.classList.add('show');
+    }
+
     switchChapter(num) {
         if (num < 1 || num > this.totalChapters) return;
-        
-        document.querySelectorAll('.chapter').forEach(ch => {
-            ch.classList.remove('active');
-        });
-        
-        const chapter = document.getElementById(`chapter${num}`);
-        if (chapter) chapter.classList.add('active');
-        
-        document.querySelectorAll('.nav-item').forEach(item => {
+
+        // Обновить активное меню
+        this.navItems.forEach(item => {
             item.classList.remove('active');
+            if (parseInt(item.dataset.chapter) === num) {
+                item.classList.add('active');
+            }
         });
-        
-        const activeItem = document.querySelector(`.nav-item[data-chapter="${num}"]`);
-        if (activeItem) activeItem.classList.add('active');
-        
+
         this.currentChapter = num;
-        document.getElementById('currentChapterDisplay').textContent = num;
-        
-        document.getElementById('prevChapterBtn').disabled = num === 1;
-        document.getElementById('nextChapterBtn').disabled = num === this.totalChapters;
-        
+        this.currentChapterDisplay.textContent = num;
+        this.prevBtn.disabled = num === 1;
+        this.nextBtn.disabled = num === this.totalChapters;
+
+        // Прогресс
         if (num > this.completedChapters) {
             this.completedChapters = num;
-            this.updateProgress();
+            const percent = (this.completedChapters / this.totalChapters) * 100;
+            this.progressFill.style.width = percent + '%';
+            this.progressPercent.textContent = Math.round(percent) + '%';
+            this.progressText.textContent = `${this.completedChapters} из ${this.totalChapters} глав`;
         }
-        
-        document.querySelector('.main-content').scrollTop = 0;
-        
-        if (num === 12) {
-            this.init3DSimulator();
+
+        // Управление видимостью контейнеров
+        if (num === 9) { // тест
+            this.viewerContainer.style.display = 'none';
+            this.testContainer.style.display = 'flex';
+            this.simulatorContainer.style.display = 'none';
+            this.infoModal.classList.remove('show');
+        } else if (num === 10) { // симулятор
+            this.viewerContainer.style.display = 'none';
+            this.testContainer.style.display = 'none';
+            this.simulatorContainer.style.display = 'flex';
+            this.infoModal.classList.remove('show');
+            // Инициализация симулятора, если ещё не создан
+            if (!this.simulator) {
+                this.simulator = new LatheSimulator3D('simulator-canvas');
+            }
         } else {
-            if (this.simulator3D) {
-                this.simulator3D.stop();
-            }
-        }
-    }
-    
-    updateProgress() {
-        const percent = (this.completedChapters / this.totalChapters) * 100;
-        
-        const fill = document.getElementById('progressFill');
-        const percentSpan = document.getElementById('progressPercent');
-        const textSpan = document.getElementById('progressText');
-        
-        if (fill) fill.style.width = percent + '%';
-        if (percentSpan) percentSpan.textContent = Math.round(percent) + '%';
-        if (textSpan) textSpan.textContent = `${this.completedChapters} из ${this.totalChapters} глав`;
-    }
-    
-    setupInteractiveElements() {
-        document.querySelectorAll('.data-table tbody tr').forEach(row => {
-            row.addEventListener('click', (e) => {
-                const part = row.dataset.part;
-                if (part) {
-                    this.showPartModal(part);
-                }
-            });
-        });
-    }
-    
-    setupModal() {
-        this.modal = document.getElementById('partModal');
-        this.modalTitle = document.getElementById('modalTitle');
-        this.modalDescription = document.getElementById('modalDescription');
-        this.modalList = document.getElementById('modalList');
-        this.modalSpecs = document.getElementById('modalSpecs');
-        
-        document.querySelector('.modal-close').addEventListener('click', () => {
-            this.modal.classList.remove('show');
-        });
-        
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) {
-                this.modal.classList.remove('show');
-            }
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.modal.classList.contains('show')) {
-                this.modal.classList.remove('show');
-            }
-        });
-    }
-    
-    showPartModal(partName) {
-        const data = this.partsData[partName];
-        if (!data) return;
-        
-        this.modalTitle.textContent = data.title;
-        this.modalDescription.textContent = data.description;
-        
-        this.modalList.innerHTML = '';
-        data.elements.forEach(el => {
-            const li = document.createElement('li');
-            li.textContent = el;
-            this.modalList.appendChild(li);
-        });
-        
-        this.modalSpecs.innerHTML = `<strong>Характеристики:</strong> ${data.specs}`;
-        
-        this.modal.classList.add('show');
-    }
-    
-    setupTest() {
-        this.testCurrent = 1;
-        this.testAnswers = {};
-        
-        this.testProgress = document.getElementById('testProgress');
-        this.testCounter = document.getElementById('testCounter');
-        this.testQuestion = document.getElementById('testQuestion');
-        this.testPrev = document.getElementById('testPrev');
-        this.testNext = document.getElementById('testNext');
-        this.testSubmit = document.getElementById('testSubmit');
-        this.testResult = document.getElementById('testResult');
-        this.resultScore = document.getElementById('resultScore');
-        this.testRestart = document.getElementById('testRestart');
-        
-        this.testPrev.addEventListener('click', () => this.prevQuestion());
-        this.testNext.addEventListener('click', () => this.nextQuestion());
-        this.testSubmit.addEventListener('click', () => this.submitTest());
-        this.testRestart.addEventListener('click', () => this.restartTest());
-        
-        this.loadTestQuestion(1);
-    }
-    
-    loadTestQuestion(num) {
-        const question = this.questions[num];
-        if (!question) return;
-        
-        this.testProgress.style.width = (num / this.testState.total * 100) + '%';
-        this.testCounter.textContent = `${num}/${this.testState.total}`;
-        
-        let html = `<p class="question-text">${question.text}</p>`;
-        html += '<div class="test-options">';
-        
-        question.options.forEach((opt, index) => {
-            const value = (index + 1).toString();
-            const checked = this.testAnswers[num] === value ? 'checked' : '';
-            html += `
-                <label class="test-option">
-                    <input type="radio" name="q${num}" value="${value}" ${checked}>
-                    <span>${opt}</span>
-                </label>
-            `;
-        });
-        
-        html += '</div>';
-        this.testQuestion.innerHTML = html;
-        
-        document.querySelectorAll(`.test-option input[name="q${num}"]`).forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.testAnswers[num] = e.target.value;
-                this.testState.answers[num] = e.target.value;
-            });
-        });
-        
-        this.testPrev.disabled = num === 1;
-        this.testNext.style.display = num === this.testState.total ? 'none' : 'block';
-        this.testSubmit.style.display = num === this.testState.total ? 'block' : 'none';
-    }
-    
-    prevQuestion() {
-        if (this.testCurrent > 1) {
-            this.testCurrent--;
-            this.loadTestQuestion(this.testCurrent);
-        }
-    }
-    
-    nextQuestion() {
-        if (this.testCurrent < this.testState.total) {
-            const selected = document.querySelector(`input[name="q${this.testCurrent}"]:checked`);
-            if (selected) {
-                this.testAnswers[this.testCurrent] = selected.value;
-                this.testState.answers[this.testCurrent] = selected.value;
-            }
-            
-            this.testCurrent++;
-            this.loadTestQuestion(this.testCurrent);
-        }
-    }
-    
-    submitTest() {
-        const selected = document.querySelector(`input[name="q${this.testCurrent}"]:checked`);
-        if (selected) {
-            this.testAnswers[this.testCurrent] = selected.value;
-            this.testState.answers[this.testCurrent] = selected.value;
-        }
-        
-        let correct = 0;
-        for (let i = 1; i <= this.testState.total; i++) {
-            if (this.testAnswers[i] === this.testState.correct[i]) {
-                correct++;
-            }
-        }
-        
-        this.testQuestion.style.display = 'none';
-        const testFooter = document.querySelector('.test-footer');
-        if (testFooter) testFooter.style.display = 'none';
-        this.testResult.style.display = 'block';
-        this.resultScore.textContent = `${correct}/${this.testState.total}`;
-    }
-    
-    restartTest() {
-        this.testCurrent = 1;
-        this.testAnswers = {};
-        this.testState.answers = {};
-        
-        this.testQuestion.style.display = 'block';
-        const testFooter = document.querySelector('.test-footer');
-        if (testFooter) testFooter.style.display = 'flex';
-        this.testResult.style.display = 'none';
-        
-        this.loadTestQuestion(1);
-    }
-    
-    setupSimulator() {
-        this.setupSimulator3D();
-    }
-    
-    setupSimulator3D() {
-        if (typeof THREE === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-            script.onload = () => {
-                this.init3DSimulator();
+            this.viewerContainer.style.display = 'block';
+            this.testContainer.style.display = 'none';
+            this.simulatorContainer.style.display = 'none';
+            this.showInfoModal(num);
+
+            // Камера: для глав 2-5 особые позиции
+            const targets = {
+                2: { pos: [0, 2, 5], target: [0, 1, -0.45] },    // станина
+                3: { pos: [-2, 1.5, 3], target: [-1, 1, -0.45] }, // передняя бабка
+                4: { pos: [3, 1.5, 1], target: [1, 1.4, -0.45] },   // задняя бабка
+                5: { pos: [0, 1.5, 2], target: [0, 1.2, -0.25] }, // суппорт
             };
-            document.head.appendChild(script);
-        } else {
-            this.init3DSimulator();
+            if (targets[num]) {
+                this.flyTo(targets[num].pos, targets[num].target);
+            } else {
+                this.flyTo([3, 2, 5], [0, 1, 0]); // общий вид
+            }
         }
     }
-    
-    init3DSimulator() {
-        if (this.currentChapter === 12) {
-            if (this.simulator3D) {
-                this.simulator3D.stop();
-                this.simulator3D = null;
+
+    setupEventListeners() {
+        this.navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const chapter = parseInt(item.dataset.chapter);
+                this.switchChapter(chapter);
+            });
+        });
+
+        this.prevBtn.addEventListener('click', () => {
+            if (this.currentChapter > 1) this.switchChapter(this.currentChapter - 1);
+        });
+
+        this.nextBtn.addEventListener('click', () => {
+            if (this.currentChapter < this.totalChapters) this.switchChapter(this.currentChapter + 1);
+        });
+
+        this.closeModalBtn.addEventListener('click', () => {
+            this.infoModal.classList.remove('show');
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === this.infoModal) {
+                this.infoModal.classList.remove('show');
             }
-            
-            setTimeout(() => {
-                this.simulator3D = new LatheSimulator3D();
-                
-                const startBtn = document.getElementById('startSimulation3d');
-                const stopBtn = document.getElementById('stopSimulation3d');
-                const resetBtn = document.getElementById('resetSimulation3d');
-                
-                if (startBtn) {
-                    const newStartBtn = startBtn.cloneNode(true);
-                    startBtn.parentNode.replaceChild(newStartBtn, startBtn);
-                    
-                    newStartBtn.addEventListener('click', () => {
-                        if (this.simulator3D) this.simulator3D.start();
-                    });
-                }
-                
-                if (stopBtn) {
-                    const newStopBtn = stopBtn.cloneNode(true);
-                    stopBtn.parentNode.replaceChild(newStopBtn, stopBtn);
-                    
-                    newStopBtn.addEventListener('click', () => {
-                        if (this.simulator3D) this.simulator3D.stop();
-                    });
-                }
-                
-                if (resetBtn) {
-                    const newResetBtn = resetBtn.cloneNode(true);
-                    resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
-                    
-                    newResetBtn.addEventListener('click', () => {
-                        if (this.simulator3D) {
-                            this.simulator3D.stop();
-                            this.simulator3D.reset();
-                        }
-                    });
-                }
-            }, 100);
-        }
+        });
+
+        this.infoToggle.addEventListener('click', () => {
+            if (this.currentChapter <= 8) { // кроме теста и симулятора
+                this.showInfoModal(this.currentChapter);
+            }
+        });
+
+        // Кнопки симулятора (будут подключены после создания)
+        // Их обработчики можно добавить позже или внутри LatheSimulator3D
     }
 }
